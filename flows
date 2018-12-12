@@ -1,0 +1,526 @@
+[
+    {
+        "id": "15786c2b.421ba4",
+        "type": "tab",
+        "label": "SPOT",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "72174c03.5cf074",
+        "type": "tab",
+        "label": "Check Profile",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "4c1a2c.610915d4",
+        "type": "tab",
+        "label": "Insert SPOT_MSG",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "240b4686.2469da",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "e2d771d0.b1b5a",
+        "type": "MySQLdatabase",
+        "z": "",
+        "host": "us-cdbr-iron-east-02.cleardb.net",
+        "port": "3306",
+        "db": "ad_fd292ea01c1c17c",
+        "tz": ""
+    },
+    {
+        "id": "60f61a40.3db564",
+        "type": "e-mail in",
+        "z": "15786c2b.421ba4",
+        "name": "GetSPOT",
+        "protocol": "IMAP",
+        "server": "imap.gmail.com",
+        "useSSL": true,
+        "port": "993",
+        "box": "SPOT",
+        "disposition": "Read",
+        "repeat": "120",
+        "x": 84,
+        "y": 136,
+        "wires": [
+            [
+                "360a94d5.70bcec",
+                "1d06035c.1233dd"
+            ]
+        ]
+    },
+    {
+        "id": "9b03075f.f97488",
+        "type": "function",
+        "z": "15786c2b.421ba4",
+        "name": "iPhone",
+        "func": "var msg2 = null;\nvar msg2 = msg;\n\nvar lat_i = msg.payload.indexOf(\"Latitude: \") + 10;\nvar lat = parseFloat(msg.payload.substring(lat_i, msg.payload.indexOf(\"\\n\", lat_i)));\n\nvar long_i= msg.payload.indexOf(\"Longitude: \") + 11;\nvar long = parseFloat(msg.payload.substring(long_i, msg.payload.indexOf(\"\\n\", long_i)));\n\n//msg2 = {payload: {\"id\":msg.from, \"dt\":msg.date, \"tp\":msg.topic, \"lat\":lat, \"long\":long, \"ok_msg\":\"Just letting you know that I am OK.\", \"orig_msg\":msg.payload}};\nmsg2 = {payload: {\"id\":msg.from, \"dt\":msg.date, \"tp\":\"Check-in/OK\", \"lat\":lat, \"long\":long, \"ok_msg\":\"Just letting you know that I am OK.\", \"orig_msg\":msg.payload}};\n\nmsg2.payload = JSON.stringify(msg2.payload);\n\nreturn [msg, msg2];",
+        "outputs": "2",
+        "noerr": 0,
+        "x": 525,
+        "y": 138,
+        "wires": [
+            [
+                "72feb032.11158"
+            ],
+            [
+                "bd45a5f0.536f08",
+                "6a5c8afc.49a084"
+            ]
+        ],
+        "outputLabels": [
+            "Debug",
+            "Queue and Log File"
+        ]
+    },
+    {
+        "id": "72feb032.11158",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "iPhone_msg",
+        "active": false,
+        "console": "true",
+        "complete": "true",
+        "x": 538,
+        "y": 76,
+        "wires": []
+    },
+    {
+        "id": "bd45a5f0.536f08",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "iPhone Log msg",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "complete": "true",
+        "x": 541,
+        "y": 196,
+        "wires": []
+    },
+    {
+        "id": "360a94d5.70bcec",
+        "type": "function",
+        "z": "15786c2b.421ba4",
+        "name": "Route based on sender",
+        "func": "var msg_iPhone = null;\nvar msg_SPOT = null;\nvar msg_Android = null;\n\nif (msg.topic.includes(\"My Location\"))\n    msg_iPhone = msg;\nelse\nif (msg.topic.includes(\"SPOT\"))\n    msg_SPOT = msg;\nelse\nif (msg.topic.includes(\"Gps\"))\n    msg_Android = msg;\n\nreturn [msg_iPhone, msg_SPOT, msg_Android];",
+        "outputs": "3",
+        "noerr": 0,
+        "x": 216,
+        "y": 244,
+        "wires": [
+            [
+                "9b03075f.f97488"
+            ],
+            [
+                "241442a3.32708e"
+            ],
+            [
+                "5e5e6b2e.f7a944"
+            ]
+        ],
+        "outputLabels": [
+            "iPhone",
+            "SPOT",
+            "Android"
+        ]
+    },
+    {
+        "id": "241442a3.32708e",
+        "type": "function",
+        "z": "15786c2b.421ba4",
+        "name": "SPOT",
+        "func": "var msg2 = null;\n\nvar lat_i = msg.html.indexOf(\"Latitude: \") + 10;\nvar lat = parseFloat(msg.html.substring(lat_i, msg.html.indexOf(\" \", lat_i)));\n\nvar long_i = msg.html.indexOf(\"Longitude: \") + 11;\nvar long = parseFloat(msg.html.substring(long_i, msg.html.indexOf(\" \", long_i)));\n\nvar id_i = msg.html.indexOf(\"Device Name: \") + 13;\nvar id = msg.html.substring(id_i, msg.html.indexOf(\" \", id_i));\n\nvar message_i = msg.html.indexOf(\"Message: \") + 9;\nvar message = msg.html.substring(message_i, msg.html.indexOf(\".\", message_i));\n\nmsg2 = {payload: {\"id\":id, \"dt\":msg.date, \"tp\":msg.topic, \"lat\":lat, \"long\":long, \"ok_msg\": message, \"orig_msg\":msg.html}};\n\nmsg2.payload = JSON.stringify(msg2.payload);\n\nreturn [msg, msg2]; // comment",
+        "outputs": "2",
+        "noerr": 0,
+        "x": 552,
+        "y": 341,
+        "wires": [
+            [
+                "ff67afe5.341c5"
+            ],
+            [
+                "575279d.5e1bf88",
+                "6a5c8afc.49a084"
+            ]
+        ]
+    },
+    {
+        "id": "ff67afe5.341c5",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "SPOT_msg",
+        "active": false,
+        "console": "true",
+        "complete": "true",
+        "x": 560,
+        "y": 285,
+        "wires": []
+    },
+    {
+        "id": "575279d.5e1bf88",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "SPOT Log msg",
+        "active": false,
+        "console": "false",
+        "complete": "true",
+        "x": 563,
+        "y": 392,
+        "wires": []
+    },
+    {
+        "id": "5e5e6b2e.f7a944",
+        "type": "function",
+        "z": "15786c2b.421ba4",
+        "name": "Android",
+        "func": "var msg2 = null;\n\n//var lat_i = msg.html.indexOf(\"Latitude: \") + 10;\nvar lat_i = msg.payload.indexOf(\"Latitude: \") + 10;\n//var lat = parseFloat(msg.html.substring(lat_i, msg.html.indexOf(\" \", lat_i)));\nvar lat = parseFloat(msg.payload.substring(lat_i, msg.payload.indexOf(\" \", lat_i)));\n\n//var long_i= msg.html.indexOf(\"Longitude: \") + 11;\nvar long_i= msg.payload.indexOf(\"Longitude: \") + 11;\n//var long = parseFloat(msg.html.substring(long_i, msg.html.indexOf(\" \", long_i)));\nvar long = parseFloat(msg.payload.substring(long_i, msg.payload.indexOf(\" \", long_i)));\n\n//msg2 = {payload: {\"id\":msg.from, \"dt\":msg.date, \"tp\":msg.topic, \"lat\":lat, \"long\":long, \"msg\":\"Just letting you know that I am OK.\", \"orig_msg\":msg.html}};\nmsg2 = {payload: {\"id\":msg.from, \"dt\":msg.date, \"tp\":msg.topic, \"lat\":lat, \"long\":long, \"msg\":\"Just letting you know that I am OK.\", \"orig_msg\":msg.payload}};\n\nmsg2.payload = JSON.stringify(msg2.payload);\n\nreturn [msg, msg2];",
+        "outputs": "2",
+        "noerr": 0,
+        "x": 535,
+        "y": 543,
+        "wires": [
+            [
+                "84b8a036.d099a"
+            ],
+            [
+                "ec8fe66c.97e0b8",
+                "6a5c8afc.49a084"
+            ]
+        ]
+    },
+    {
+        "id": "84b8a036.d099a",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "Android_msg",
+        "active": true,
+        "console": "true",
+        "complete": "true",
+        "x": 558,
+        "y": 485,
+        "wires": []
+    },
+    {
+        "id": "ec8fe66c.97e0b8",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "Android Log msg",
+        "active": true,
+        "console": "false",
+        "complete": "true",
+        "x": 560,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "1d06035c.1233dd",
+        "type": "debug",
+        "z": "15786c2b.421ba4",
+        "name": "GetSPOT",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "x": 218,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "45f27937.f228c8",
+        "type": "link out",
+        "z": "15786c2b.421ba4",
+        "name": "",
+        "links": [
+            "212a884c.afbf08"
+        ],
+        "x": 1014,
+        "y": 402,
+        "wires": []
+    },
+    {
+        "id": "212a884c.afbf08",
+        "type": "link in",
+        "z": "72174c03.5cf074",
+        "name": "",
+        "links": [
+            "45f27937.f228c8"
+        ],
+        "x": 127,
+        "y": 118,
+        "wires": [
+            [
+                "a0ef7dbb.c1298"
+            ]
+        ]
+    },
+    {
+        "id": "eb68647d.fd5ea8",
+        "type": "function",
+        "z": "72174c03.5cf074",
+        "name": "Check for Profile",
+        "func": "//save the object\nglobal.set('spot_msg_JSON_obj', msg.payload);\n\n// removed because its not JSON   var obj = JSON.parse(msg.payload);\nobj = msg.payload;\n\nvar id = obj.id;\n\nvar sql = \"SELECT spot_device_name from profile where email = '\"+ id +\"';\";\n\nmsg.topic = sql;\nmsg.payload = \"\";\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 354,
+        "y": 182,
+        "wires": [
+            [
+                "c949092.9b8a3f8"
+            ]
+        ]
+    },
+    {
+        "id": "c949092.9b8a3f8",
+        "type": "mysql",
+        "z": "72174c03.5cf074",
+        "mydb": "e2d771d0.b1b5a",
+        "name": "Select from Profile",
+        "x": 343,
+        "y": 282,
+        "wires": [
+            [
+                "583c351a.946f9c",
+                "1ec2cdb3.68fa32"
+            ]
+        ]
+    },
+    {
+        "id": "583c351a.946f9c",
+        "type": "debug",
+        "z": "72174c03.5cf074",
+        "name": "Profile check",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "x": 347,
+        "y": 364,
+        "wires": []
+    },
+    {
+        "id": "1ec2cdb3.68fa32",
+        "type": "function",
+        "z": "72174c03.5cf074",
+        "name": "Check if record found",
+        "func": "var obj = [];\nobj = global.get('spot_msg_JSON_obj');\n\nvar obj2 = [];\n\nobj2 = obj;\nif (msg.payload.length > 0) {\n    obj2.id = msg.payload[0]['spot_device_name'];\n}\nelse {\n    obj2.id = \"##\" + obj.id + \"##\";\n}\n\nmsg = {payload: obj2, topic: \"\"};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 625,
+        "y": 407,
+        "wires": [
+            [
+                "5da3ad45.d41ae4",
+                "71ea61b1.96c5a"
+            ]
+        ]
+    },
+    {
+        "id": "5da3ad45.d41ae4",
+        "type": "debug",
+        "z": "72174c03.5cf074",
+        "name": "Profile check result",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "x": 954,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "da3d69b3.90ddc8",
+        "type": "mysql",
+        "z": "4c1a2c.610915d4",
+        "mydb": "e2d771d0.b1b5a",
+        "name": "SPOT Database",
+        "x": 506,
+        "y": 263,
+        "wires": [
+            [
+                "8410ba4.1df6648"
+            ]
+        ]
+    },
+    {
+        "id": "ac8f75b6.51d0e8",
+        "type": "function",
+        "z": "4c1a2c.610915d4",
+        "name": "Format SQL",
+        "func": "var obj = JSON.parse(msg.payload);\nvar id = obj.id;\nvar dt = obj.dt;\nvar tp = obj.tp;\nvar lat = obj.lat;\nvar long = obj.long;\nvar ok_msg = obj.ok_msg;\nvar orig_msg = obj.orig_msg;\nvar sql = \"INSERT INTO spot_msg (device, latitude, longitude, location_dto, point_date_time, time_zone, subject, msg, orig_email) \";\nsql = sql + \" VALUES('\" + id + \"',\" + lat + \",\" + long + \",'\";\nsql = sql + dt + \"','\"; \nsql = sql + dt + \"','UTC', '\";\nsql = sql + tp + \"','\";\nsql = sql + ok_msg + \"','\" + orig_msg + \"');\";\n\nmsg.topic = sql;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 262,
+        "y": 232,
+        "wires": [
+            [
+                "89f1a554.fe5f68",
+                "da3d69b3.90ddc8"
+            ]
+        ]
+    },
+    {
+        "id": "89f1a554.fe5f68",
+        "type": "debug",
+        "z": "4c1a2c.610915d4",
+        "name": "Format SQL",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 276,
+        "y": 297,
+        "wires": []
+    },
+    {
+        "id": "8410ba4.1df6648",
+        "type": "debug",
+        "z": "4c1a2c.610915d4",
+        "name": "MYSQL result ",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "x": 525,
+        "y": 327,
+        "wires": []
+    },
+    {
+        "id": "9344aedf.ca73e",
+        "type": "link out",
+        "z": "72174c03.5cf074",
+        "name": "",
+        "links": [
+            "79dffb01.a9e204"
+        ],
+        "x": 1029,
+        "y": 213,
+        "wires": []
+    },
+    {
+        "id": "79dffb01.a9e204",
+        "type": "link in",
+        "z": "4c1a2c.610915d4",
+        "name": "",
+        "links": [
+            "9344aedf.ca73e"
+        ],
+        "x": 119,
+        "y": 177,
+        "wires": [
+            [
+                "ac8f75b6.51d0e8"
+            ]
+        ]
+    },
+    {
+        "id": "6a5c8afc.49a084",
+        "type": "function",
+        "z": "15786c2b.421ba4",
+        "name": "Pass through",
+        "func": "return msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 841,
+        "y": 309,
+        "wires": [
+            [
+                "45f27937.f228c8"
+            ]
+        ]
+    },
+    {
+        "id": "a0ef7dbb.c1298",
+        "type": "json",
+        "z": "72174c03.5cf074",
+        "name": "Convert to Javascript Object",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 331,
+        "y": 99,
+        "wires": [
+            [
+                "eb68647d.fd5ea8",
+                "e961449f.3c6f18"
+            ]
+        ]
+    },
+    {
+        "id": "e961449f.3c6f18",
+        "type": "debug",
+        "z": "72174c03.5cf074",
+        "name": "debug 3",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "x": 568,
+        "y": 64,
+        "wires": []
+    },
+    {
+        "id": "71ea61b1.96c5a",
+        "type": "json",
+        "z": "72174c03.5cf074",
+        "name": "Convert JSON String",
+        "property": "payload",
+        "action": "str",
+        "pretty": false,
+        "x": 845,
+        "y": 258,
+        "wires": [
+            [
+                "9344aedf.ca73e"
+            ]
+        ]
+    },
+    {
+        "id": "33fa6c57.64acd4",
+        "type": "e-mail in",
+        "z": "240b4686.2469da",
+        "name": "Read Gmail",
+        "protocol": "IMAP",
+        "server": "imap.gmail.com",
+        "useSSL": false,
+        "port": "143",
+        "box": "SPOT",
+        "disposition": "Read",
+        "repeat": "10",
+        "x": 253,
+        "y": 156,
+        "wires": [
+            [
+                "47553a72.aaec44"
+            ]
+        ]
+    },
+    {
+        "id": "47553a72.aaec44",
+        "type": "debug",
+        "z": "240b4686.2469da",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 479,
+        "y": 163,
+        "wires": []
+    }
+]
